@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tanti auguri – Drei Stunden am Steuer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..800;1,6..96,400..800&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --lago:#0D3A40;      /* tiefes Seewasser */
+    --acqua:#2F7F86;     /* Seefläche auf der Karte */
+    --riva:#7FB8B5;      /* Flachwasser am Ufer */
+    --monte:#17362F;     /* Land, Berge */
+    --giallo:#F2C14E;    /* Boot, Gashebel */
+    --intonaco:#F3C9C1;  /* Putzrosa der Häuser in Varenna */
+    --menta:#E4EFEA;     /* Postkartenpapier */
+    --schiuma:#E3EFEC;   /* Text auf dunklem Grund */
+    --serif:"Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    --sans:"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--lago);color:var(--schiuma);font:400 1.0625rem/1.55 var(--sans);overflow-x:hidden}
+  button{font:inherit}
+  :focus-visible{outline:3px solid var(--giallo);outline-offset:3px;border-radius:4px}
+
+  /* ---------- Hero: Berge, Varenna, Spiegelung ---------- */
+  .hero{position:relative;height:100vh;min-height:560px;overflow:hidden;background:#CFE6E3}
+  #lake{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+  .hero-copy{position:absolute;left:0;right:0;top:9%;padding:0 7vw;pointer-events:none}
+  .hero h1{margin:0;font-family:var(--serif);font-style:italic;font-weight:500;
+    font-size:clamp(3.1rem,15.5vw,8.5rem);line-height:.9;letter-spacing:-.02em;color:var(--lago);
+    font-variation-settings:"opsz" 96}
+  .hero h1 .nm{display:block}
+  .water-copy{position:absolute;left:0;right:0;bottom:7%;padding:0 7vw;pointer-events:none;
+    color:#F4FAF8;text-shadow:0 1px 14px rgba(5,30,34,.55)}
+  .water-copy p{margin:0;max-width:30ch;font-size:clamp(1.05rem,4.4vw,1.35rem);line-height:1.45}
+  .hint{margin-top:.9rem!important;font-size:.95rem!important;opacity:.85;transition:opacity .8s}
+  .hint.gone{opacity:0}
+
+  /* ---------- Steuer: Karte + Gashebel ---------- */
+  .steer{background:radial-gradient(120% 60% at 70% 0%, #1F4740 0%, var(--monte) 60%);padding:4.5rem 6vw 3.5rem}
+  .wrap{max-width:46rem;margin:0 auto}
+  h2{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(2.2rem,9vw,3.6rem);
+    line-height:1;letter-spacing:-.015em;margin:0 0 1rem;font-variation-settings:"opsz" 72}
+  .lede{margin:0 0 2rem;max-width:34ch;color:#C9DCD7}
+  .console{display:grid;grid-template-columns:1fr 100px;gap:.75rem;align-items:end}
+  .chart{width:100%;height:auto;display:block;overflow:hidden}
+  .chart .place{font:500 11px var(--sans);fill:#F4FAF8}
+  .chart .faint{font:400 9.5px var(--sans);fill:#8DB2AA}
+  .chart .dot{fill:var(--monte);stroke:#F4FAF8;stroke-width:1.4;transition:fill .3s}
+  .chart .dot.on{fill:var(--giallo);stroke:var(--giallo)}
+
+  .lever{display:flex;flex-direction:column;align-items:center;gap:.6rem;padding-bottom:.25rem}
+  .lever-scale{position:relative;display:grid;grid-template-columns:auto 34px;gap:1rem;height:280px}
+  .lever-scale ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;justify-content:space-between;
+    text-align:right;font:italic 500 .82rem/1 var(--serif);color:#9EC0B8;padding:6px 0}
+  .lever-scale li{transition:color .2s}
+  .lever-scale li.on{color:var(--giallo)}
+  .throttle{position:relative;width:34px;height:100%;border-radius:17px;background:#0F2A25;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.5);touch-action:none;cursor:grab}
+  .throttle::before{content:"";position:absolute;left:50%;top:14px;bottom:14px;width:2px;margin-left:-1px;background:#2E5249}
+  .knob{position:absolute;left:-7px;width:48px;height:40px;bottom:0;border-radius:12px 12px 16px 16px;
+    background:linear-gradient(180deg,#F8D677,#E1A93A);box-shadow:0 4px 10px rgba(0,0,0,.45),inset 0 -3px 0 rgba(0,0,0,.18);
+    pointer-events:none}
+  .knob::after{content:"";position:absolute;left:12px;right:12px;top:17px;height:3px;border-radius:2px;background:rgba(90,55,10,.45)}
+  .lever-caption{font-size:.8rem;color:#9EC0B8;text-align:center;line-height:1.25}
+
+  .postcard{position:relative;margin-top:2rem;background:var(--menta);color:var(--lago);border-radius:6px;
+    padding:1.25rem 7.2rem 1.4rem 1.3rem;min-height:9.5rem;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+  .postcard .stop-no{margin:0 0 .3rem;font-size:.85rem;color:#4F7A76}
+  .postcard h3{margin:0 0 .35rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.65rem;line-height:1.05}
+  .postcard p.txt{margin:0;font-size:.98rem;line-height:1.5;max-width:36ch}
+  .postcard.flip{animation:flip .5s ease}
+  @keyframes flip{0%{transform:rotateX(0)}45%{transform:rotateX(78deg)}100%{transform:rotateX(0)}}
+  .stamp{position:absolute;right:1.1rem;top:1.1rem;width:66px;height:80px;background:var(--intonaco);
+    padding:3px;border:4px dotted var(--menta);transform:rotate(3deg)}
+  .stamp svg{width:100%;height:100%;display:block}
+  .postmark{position:absolute;right:3.3rem;top:4.3rem;width:60px;height:60px;opacity:.55;transform:rotate(-14deg);pointer-events:none}
+
+  .arrive{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem}
+  .arrive[hidden]{display:none}
+  .btn{appearance:none;border:0;border-radius:999px;padding:.85rem 1.35rem;font-weight:600;cursor:pointer}
+  .btn-main{background:var(--giallo);color:var(--lago)}
+  .btn-ghost{background:transparent;color:var(--schiuma);box-shadow:inset 0 0 0 1.5px #5E8B82}
+
+  /* ---------- Geschenk: Biglietto ---------- */
+  .gift{padding:4.5rem 6vw 3rem;background:var(--lago)}
+  .ticket{position:relative;max-width:24rem;margin:2rem auto 0;filter:drop-shadow(0 20px 30px rgba(0,0,0,.4))}
+  .t-main,.t-stub{position:relative;background:var(--intonaco);color:var(--lago)}
+  .t-main{border-radius:10px 10px 0 0;padding:1.6rem 1.5rem 1.4rem;overflow:hidden}
+  .t-main::after{content:"";position:absolute;inset:8px;border:1.5px solid rgba(13,58,64,.35);border-radius:6px;pointer-events:none}
+  .t-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.4rem;font-size:.82rem;color:#5A6F6C}
+  .t-main h3{margin:0 0 1.1rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:2.35rem;line-height:1;letter-spacing:-.01em}
+  .t-main dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.55rem 1rem;font-size:.95rem}
+  .t-main dt{color:#5A6F6C}
+  .t-main dd{margin:0;font-weight:500}
+  .t-main .wave{display:block;width:100%;height:22px;margin-top:1.1rem}
+  .t-stub{border-radius:0 0 10px 10px;padding:1.2rem 1.5rem 1.3rem;border-top:2px dashed rgba(13,58,64,.45);
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;cursor:grab;touch-action:none;
+    transform-origin:20% 0;transition:transform .35s ease}
+  .t-stub::before,.t-stub::after{content:"";position:absolute;top:-13px;width:24px;height:24px;border-radius:50%;background:var(--lago)}
+  .t-stub::before{left:-12px}.t-stub::after{right:-12px}
+  .t-stub .big{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.5rem;line-height:1}
+  .t-stub .small{font-size:.85rem;color:#5A6F6C;text-align:right;line-height:1.3}
+  .t-stub.dragging{transition:none;cursor:grabbing}
+  .t-stub.torn{transition:transform .9s cubic-bezier(.5,0,.75,.3),opacity .9s ease;
+    transform:translate(40px,260px) rotate(24deg)!important;opacity:0;pointer-events:none}
+  .rubber{position:absolute;right:1rem;top:3.4rem;width:112px;height:112px;opacity:0;transform:scale(1.8) rotate(-18deg);pointer-events:none}
+  .ticket.is-torn .rubber{animation:stampIn .45s .55s cubic-bezier(.2,.9,.3,1.3) forwards}
+  @keyframes stampIn{to{opacity:.85;transform:scale(1) rotate(-12deg)}}
+  .ticket.is-torn .t-main{border-radius:10px;transition:border-radius .3s .6s}
+  .redeemed{max-width:24rem;margin:2.2rem auto 0;text-align:center}
+  .redeemed[hidden]{display:none}
+  .redeemed .big{margin:0 0 .4rem;font-family:var(--serif);font-style:italic;font-weight:500;font-size:2.4rem;line-height:1;color:var(--giallo)}
+  .redeemed p{margin:0 auto;max-width:30ch}
+  .salute{max-width:24rem;margin:3.5rem auto 0;text-align:center}
+  .salute h3{margin:0 0 .5rem;font-family:var(--serif);font-style:italic;font-weight:500;font-size:2rem;line-height:1.05}
+  .salute > p{margin:0 auto;max-width:30ch;color:#C9DCD7}
+  .glasses{display:flex;justify-content:center;gap:1.5rem;margin-top:1.4rem}
+  .glass{appearance:none;background:transparent;border:0;color:var(--schiuma);cursor:pointer;padding:.6rem .8rem;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;gap:.35rem;transition:background .3s}
+  .glass svg{width:72px;height:120px;display:block;overflow:visible}
+  .glass span{font-family:var(--serif);font-style:italic;font-size:1.25rem}
+  .glass .liquid{fill:var(--drink);transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0);transition:transform .9s cubic-bezier(.3,.7,.3,1)}
+  .glass .bubble{fill:#FFD9A8;opacity:0}
+  .glass .garnish{opacity:0;transform:translateY(-6px);transition:opacity .4s .6s,transform .4s .6s}
+  .glass[aria-pressed="true"]{background:rgba(227,239,236,.08)}
+  .glass[aria-pressed="true"] .liquid{transform:scaleY(1)}
+  .glass[aria-pressed="true"] .garnish{opacity:1;transform:none}
+  .glass[aria-pressed="true"] .bubble{animation:fizz 2.4s 1s infinite ease-in}
+  @keyframes fizz{0%{opacity:0;transform:translateY(0)}20%{opacity:.9}100%{opacity:0;transform:translateY(-16px)}}
+  .salute-msg{min-height:1.6em;margin:.9rem 0 0;font-family:var(--serif);font-style:italic;font-size:1.3rem;color:var(--giallo)}
+  .fine{max-width:24rem;margin:2.6rem auto 0;font-size:.85rem;color:#8FB1AA;line-height:1.5}
+
+  footer{padding:3rem 6vw 4.5rem;background:var(--lago);text-align:center}
+  footer p{margin:0 auto;max-width:28ch;font-family:var(--serif);font-style:italic;font-size:1.35rem;line-height:1.35;color:#C9DCD7}
+  footer .sig{display:block;margin-top:.9rem;font-size:2rem;color:var(--schiuma)}
+
+  @media (min-width:720px){
+    .console{grid-template-columns:1fr 120px;gap:2rem}
+    .lever-scale{height:340px}
+    .ticket{margin-top:2.5rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .postcard.flip{animation:none}
+    .t-stub.torn{transition:opacity .3s}
+    .ticket.is-torn .rubber{animation:none;opacity:.85;transform:rotate(-12deg)}
+    .glass .liquid,.glass .garnish{transition:none}
+    .glass[aria-pressed="true"] .bubble{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero" id="top">
+  <canvas id="lake" aria-hidden="true"></canvas>
+  <div class="hero-copy">
+    <h1 id="headline">Tanti auguri,<span class="nm" id="nm"></span></h1>
+  </div>
+  <div class="water-copy">
+    <p>Dein Geschenk liegt nicht unter Geschenkpapier, sondern auf dem Wasser.</p>
+    <p class="hint" id="hint">Berühr es mal. Dann scroll runter zu deinem Boot.</p>
+  </div>
+</header>
+
+<section class="steer" aria-labelledby="steer-h">
+  <div class="wrap">
+    <h2 id="steer-h">Du übernimmst das Steuer.</h2>
+    <p class="lede">Drei Stunden, ein eigenes Boot, direkt vom Campingplatz los. Für bis zu 40&nbsp;PS brauchst du keinen Führerschein. Also üb schon mal: Schieb den Gashebel nach oben.</p>
+
+    <div class="console">
+      <svg class="chart" id="chart" viewBox="26 6 244 516" role="img" aria-label="Karte vom Norden des Comer Sees mit einer Rundfahrt ab Domaso über Piona, Corenno Plinio, Rezzonico und Gravedona zurück nach Domaso">
+        <defs>
+          <mask id="wakeMask" maskUnits="userSpaceOnUse">
+            <path id="wakeReveal" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+          </mask>
+        </defs>
+        <g id="lakeLayers"></g>
+        <path id="route" fill="none" stroke="none"
+          d="M 104 138 C 130 160, 165 205, 190 228 C 200 232, 210 214, 214 200 C 218 214, 214 240, 210 270 C 206 300, 204 325, 203 350 C 190 390, 140 420, 120 440 C 112 410, 104 370, 102 320 C 98 280, 96 230, 100 184 C 102 165, 104 150, 104 138"/>
+        <path id="routeHint" fill="none" stroke="#F4FAF8" stroke-opacity=".28" stroke-width="1" stroke-dasharray="1 4" stroke-linecap="round"
+          d="M 104 138 C 130 160, 165 205, 190 228 C 200 232, 210 214, 214 200 C 218 214, 214 240, 210 270 C 206 300, 204 325, 203 350 C 190 390, 140 420, 120 440 C 112 410, 104 370, 102 320 C 98 280, 96 230, 100 184 C 102 165, 104 150, 104 138"/>
+        <path id="wake" fill="none" stroke="#F4FAF8" stroke-width="1.6" stroke-dasharray="2.5 2.5" stroke-linecap="round" mask="url(#wakeMask)"
+          d="M 104 138 C 130 160, 165 205, 190 228 C 200 232, 210 214, 214 200 C 218 214, 214 240, 210 270 C 206 300, 204 325, 203 350 C 190 390, 140 420, 120 440 C 112 410, 104 370, 102 320 C 98 280, 96 230, 100 184 C 102 165, 104 150, 104 138"/>
+        <text class="faint" x="222" y="112">Colico</text>
+        <text class="faint" x="80" y="252" text-anchor="end">Dongo</text>
+        <text class="faint" x="224" y="394">Dervio</text>
+        <text class="faint" x="172" y="514" text-anchor="middle">Richtung Menaggio</text>
+        <g id="stops"></g>
+        <g transform="translate(250 44)" aria-hidden="true">
+          <circle r="13" fill="none" stroke="#5E8B82" stroke-width=".8"/>
+          <path d="M0 -10 L3 0 L0 10 L-3 0 Z" fill="#5E8B82"/><path d="M0 -10 L3 0 L-3 0 Z" fill="#F4FAF8"/>
+          <text x="0" y="-16" text-anchor="middle" class="faint">N</text>
+        </g>
+        <g id="boat">
+          <g id="bowWave" opacity="0" stroke="#F4FAF8" stroke-width="1" stroke-linecap="round" fill="none">
+            <path d="M 8 -2 L -6 -8"/><path d="M 8 2 L -6 8"/>
+          </g>
+          <path d="M -7 -3.4 L 3 -3.4 Q 8 -3.4 9.5 0 Q 8 3.4 3 3.4 L -7 3.4 Q -8 0 -7 -3.4 Z" fill="#F2C14E" stroke="#5a3d08" stroke-width=".5"/>
+          <path d="M -1 -2.6 L 2.6 -2.2 Q 3.6 0 2.6 2.2 L -1 2.6 Z" fill="#0D3A40" opacity=".75"/>
+          <rect x="-6" y="-1.6" width="4" height="3.2" rx=".8" fill="#F4FAF8"/>
+        </g>
+      </svg>
+
+      <div class="lever">
+        <div class="lever-scale">
+          <ol aria-hidden="true" id="gears">
+            <li data-g="3">Tutta</li><li data-g="2">Mezza</li><li data-g="1">Adagio</li><li data-g="0" class="on">Folle</li>
+          </ol>
+          <div class="throttle" id="throttle" role="slider" tabindex="0" aria-label="Gashebel"
+               aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="Leerlauf">
+            <div class="knob" id="knob"></div>
+          </div>
+        </div>
+        <div class="lever-caption">Gas</div>
+      </div>
+    </div>
+
+    <article class="postcard" id="card" aria-live="polite">
+      <p class="stop-no" id="cardNo">Halt 1 von 6</p>
+      <h3 id="cardTitle">Domaso</h3>
+      <p class="txt" id="cardText">Hier legen wir ab.</p>
+      <div class="stamp" aria-hidden="true">
+        <svg viewBox="0 0 54 68">
+          <rect width="54" height="68" fill="#F3C9C1"/>
+          <rect x="3" y="3" width="48" height="62" fill="none" stroke="#0D3A40" stroke-width=".8"/>
+          <path d="M3 44 L14 26 L21 34 L31 18 L51 44 Z" fill="#2F7F86"/>
+          <path d="M31 18 L36 24 L33 25 Z" fill="#F4FAF8"/>
+          <circle cx="40" cy="14" r="5" fill="#F2C14E"/>
+          <path d="M3 50 Q9 46 15 50 T27 50 T39 50 T51 50" fill="none" stroke="#0D3A40" stroke-width="1"/>
+          <path d="M3 56 Q9 52 15 56 T27 56 T39 56 T51 56" fill="none" stroke="#0D3A40" stroke-width="1"/>
+        </svg>
+      </div>
+      <svg class="postmark" viewBox="0 0 70 70" aria-hidden="true">
+        <defs><path id="pmArc" d="M 35 35 m -24 0 a 24 24 0 1 1 48 0 a 24 24 0 1 1 -48 0"/></defs>
+        <circle cx="35" cy="35" r="31" fill="none" stroke="#0D3A40" stroke-width="1.2"/>
+        <circle cx="35" cy="35" r="17" fill="none" stroke="#0D3A40" stroke-width=".8"/>
+        <text font-size="8.5" font-family="Hanken Grotesk, sans-serif" fill="#0D3A40" letter-spacing="1"><textPath href="#pmArc">Lago di Como  ·  Lago di Como  ·</textPath></text>
+        <text x="35" y="38.5" text-anchor="middle" font-size="9" font-style="italic" font-family="Bodoni Moda, serif" fill="#0D3A40" id="pmDay">estate</text>
+      </svg>
+    </article>
+
+    <div class="arrive" id="arrive" hidden>
+      <button class="btn btn-main" id="toGift" type="button">Dein Geschenk ansehen</button>
+      <button class="btn btn-ghost" id="again" type="button">Noch eine Runde fahren</button>
+    </div>
+  </div>
+</section>
+
+<section class="gift" id="geschenk" aria-labelledby="gift-h">
+  <div class="wrap">
+    <h2 id="gift-h">Und das hier gehört dir.</h2>
+    <div class="ticket" id="ticket">
+      <div class="t-main">
+        <div class="t-head"><span>Biglietto per tre ore</span><span>Nr. 01</span></div>
+        <h3>Drei Stunden am Steuer</h3>
+        <dl>
+          <dt>Für</dt><dd id="tFor">das Geburtstagskind</dd>
+          <dt>Revier</dt><dd>Comer See, ab Domaso</dd>
+          <dt>Boot</dt><dd>Motorboot bis 40&nbsp;PS, ohne Führerschein, du fährst selbst</dd>
+          <dt>Dauer</dt><dd>3 Stunden Bootsmiete</dd>
+          <dt>Route</dt><dd>Piona, Corenno Plinio, Rezzonico, Gravedona</dd>
+          <dt>Termin</dt><dd>Pfingsten, direkt vom Campingplatz aus</dd>
+          <dt>Inklusive</dt><dd>Gelato unterwegs, danach Aperol oder Vino an der Promenade</dd>
+          <dt>Mitnehmen</dt><dd>Sonnenbrille, Jacke für den Fahrtwind, Ausweis</dd>
+        </dl>
+        <svg class="wave" viewBox="0 0 300 22" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 11 Q 12.5 2 25 11 T 50 11 T 75 11 T 100 11 T 125 11 T 150 11 T 175 11 T 200 11 T 225 11 T 250 11 T 275 11 T 300 11" fill="none" stroke="#2F7F86" stroke-width="2"/>
+        </svg>
+        <svg class="rubber" viewBox="0 0 112 112" aria-hidden="true">
+          <defs><path id="rbArc" d="M 56 56 m -40 0 a 40 40 0 1 1 80 0 a 40 40 0 1 1 -80 0"/></defs>
+          <circle cx="56" cy="56" r="50" fill="none" stroke="#2F7F86" stroke-width="3"/>
+          <circle cx="56" cy="56" r="31" fill="none" stroke="#2F7F86" stroke-width="1.5"/>
+          <text font-size="10.5" font-weight="600" font-family="Hanken Grotesk, sans-serif" fill="#2F7F86" letter-spacing="2"><textPath href="#rbArc">eingelöst  ✦  a bordo  ✦  eingelöst  ✦</textPath></text>
+          <text x="56" y="62" text-anchor="middle" font-size="17" font-style="italic" font-weight="700" font-family="Bodoni Moda, serif" fill="#2F7F86">Si parte!</text>
+        </svg>
+      </div>
+      <div class="t-stub" id="stub" role="button" tabindex="0" aria-label="Abschnitt abreißen und Geschenk einlösen">
+        <span class="big">Tagliando</span>
+        <span class="small">Zum Einlösen<br>nach unten abreißen</span>
+      </div>
+    </div>
+
+    <div class="redeemed" id="redeemed" hidden aria-live="polite">
+      <p class="big">Eingelöst.</p>
+      <p>Pfingsten steht. Ich kümmere mich ums Boot, du dich um die Musik.</p>
+    </div>
+
+    <div class="salute">
+      <h3>Und danach: Dolce Vita.</h3>
+      <p>Wenn das Boot zurück ist, wird angestoßen. Was darf es sein?</p>
+      <div class="glasses">
+        <button class="glass" type="button" aria-pressed="false" data-pick="Aperol Spritz" style="--drink:#F0761E">
+          <svg viewBox="0 0 60 100" aria-hidden="true">
+            <clipPath id="bowlA"><path d="M13 10 Q11 42 30 54 Q49 42 47 10 Z"/></clipPath>
+            <g clip-path="url(#bowlA)"><rect class="liquid" x="0" y="22" width="60" height="34"/>
+              <circle class="bubble" cx="24" cy="44" r="1.3"/><circle class="bubble" cx="34" cy="38" r="1"/><circle class="bubble" cx="29" cy="48" r="1.1"/></g>
+            <path d="M13 10 Q11 42 30 54 Q49 42 47 10" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M30 54 V88 M19 90 Q30 85 41 90" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <g class="garnish"><circle cx="45" cy="13" r="7" fill="#F7A23A"/><circle cx="45" cy="13" r="5" fill="#FBC56A"/><path d="M45 8 V18 M40 13 H50 M41.5 9.5 L48.5 16.5 M48.5 9.5 L41.5 16.5" stroke="#F7A23A" stroke-width=".7"/></g>
+          </svg>
+          <span>Aperol</span>
+        </button>
+        <button class="glass" type="button" aria-pressed="false" data-pick="ein Glas Vino" style="--drink:#9B2D43">
+          <svg viewBox="0 0 60 100" aria-hidden="true">
+            <clipPath id="bowlV"><path d="M14 8 Q10 44 30 52 Q50 44 46 8 Z"/></clipPath>
+            <g clip-path="url(#bowlV)"><rect class="liquid" x="0" y="30" width="60" height="24"/></g>
+            <path d="M14 8 Q10 44 30 52 Q50 44 46 8" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M30 52 V88 M19 90 Q30 85 41 90" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <span>Vino</span>
+        </button>
+      </div>
+      <p class="salute-msg" id="saluteMsg" aria-live="polite"></p>
+    </div>
+
+    <p class="fine">Gut zu wissen: Boote bis 40&nbsp;PS darf man am Comer See ohne Bootsführerschein fahren. Mieten kann man ab 18 Jahren mit Ausweis. Schwimmwesten sind an Bord, eine kurze Einweisung gibt es vor dem Ablegen.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Alles Gute zum Geburtstag und immer eine Handbreit Wasser unterm Kiel.<span class="sig" id="sig">Malte</span></p>
+</footer>
+
+<script>
+(() => {
+  /* ======== Anpassen ========
+     Name des Geburtstagskinds: hier eintragen ODER an die URL hängen, z. B. …#Maike
+     (im Link nur Buchstaben, Ziffern und Bindestriche; Bindestrich wird zum Leerzeichen) */
+  const NAME = "Maike";
+  const FROM = "Malte";
+  /* ========================== */
+
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ---------- Name ----------
+  function readName(){
+    const h = decodeURIComponent((location.hash || "").slice(1)).replace(/-/g, " ").trim();
+    if (h && /^[\p{L}\d ]{1,30}$/u.test(h)) return h;
+    return NAME.trim();
+  }
+  function applyName(){
+    const n = readName();
+    const nm = document.getElementById("nm");
+    const h1 = document.getElementById("headline");
+    if (n){ h1.firstChild.nodeValue = "Tanti auguri,"; nm.textContent = n + "!"; document.getElementById("tFor").textContent = n; }
+    else { h1.firstChild.nodeValue = "Tanti auguri!"; nm.textContent = ""; }
+    document.getElementById("sig").textContent = FROM;
+  }
+  applyName();
+  window.addEventListener("hashchange", applyName);
+
+  // ---------- Seeded random ----------
+  function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+  /* =========================================================
+     HERO – Berge + Varenna, darunter eine berührbare Spiegelung
+     ========================================================= */
+  const hero = document.querySelector(".hero");
+  const cv = document.getElementById("lake");
+  const ctx = cv.getContext("2d");
+  const S = 2;                    // CSS-Pixel pro Simulationspixel
+  let W, H, HT, dpr, sw, sh, b1, b2, tex, outImg, small, sctx, shimmer, running = false, lastW = 0;
+
+  function drawScene(c, w, ht){
+    // Himmel
+    const sky = c.createLinearGradient(0, 0, 0, ht);
+    sky.addColorStop(0, "#9DCFDB"); sky.addColorStop(.55, "#CFE6E3"); sky.addColorStop(1, "#F6DEC1");
+    c.fillStyle = sky; c.fillRect(0, 0, w, ht);
+    // Sonne
+    const sx = w * .8, sy = ht * .5;
+    const sg = c.createRadialGradient(sx, sy, 0, sx, sy, Math.max(90, w * .2));
+    sg.addColorStop(0, "rgba(255,246,214,.95)"); sg.addColorStop(.18, "rgba(255,240,200,.75)"); sg.addColorStop(1, "rgba(255,240,200,0)");
+    c.fillStyle = sg; c.fillRect(0, 0, w, ht);
+
+    function ridge(minY, maxY, color, seed, f, step){
+      const r = rng(seed), p1 = r() * 6, p2 = r() * 6, p3 = r() * 6;
+      c.beginPath(); c.moveTo(0, ht);
+      for (let x = 0; x <= w + step; x += step){
+        const u = x / w;
+        let v = .55 * Math.sin(u * f + p1) + .3 * Math.sin(u * f * 2.3 + p2) + .15 * Math.sin(u * f * 5.1 + p3);
+        v += (r() - .5) * .12;
+        const y = maxY - (v * .5 + .5) * (maxY - minY);
+        c.lineTo(x, y);
+      }
+      c.lineTo(w, ht); c.closePath(); c.fillStyle = color; c.fill();
+    }
+    ridge(ht * .50, ht * .74, "#A9C3C6", 7, 7.5, 5);
+    ridge(ht * .62, ht * .84, "#6E9A98", 21, 5.2, 4);
+    ridge(ht * .76, ht * .93, "#2F5D55", 3, 3.4, 4);
+
+    // Varenna: Häuser am Ufer
+    const s = Math.min(1.7, Math.max(1, w / 390));
+    const r = rng(42);
+    const palette = ["#F2C14E", "#F3C9C1", "#E8B57A", "#F3E6CC", "#EBA9A3", "#D9E3C9", "#F0D28C"];
+    const x0 = w * .03, x1 = w * .62;
+    function house(x, base, hw, hh, col){
+      c.fillStyle = col; c.fillRect(x, base - hh, hw, hh);
+      c.fillStyle = "rgba(0,0,0,.08)"; c.fillRect(x + hw - 2 * s, base - hh, 2 * s, hh);
+      c.fillStyle = "#9A5B46"; c.beginPath(); c.moveTo(x - 1, base - hh); c.lineTo(x + hw / 2, base - hh - 4 * s); c.lineTo(x + hw + 1, base - hh); c.closePath(); c.fill();
+      const cols = Math.max(1, Math.floor((hw - 4 * s) / (6 * s)));
+      const rows = Math.max(1, Math.floor((hh - 6 * s) / (8 * s)));
+      for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++){
+        const wx = x + (hw - cols * 6 * s) / 2 + j * 6 * s + 1.8 * s;
+        const wy = base - hh + 5 * s + i * 8 * s;
+        c.fillStyle = "#3E6B57"; c.fillRect(wx - 1.1 * s, wy, 1 * s, 3.6 * s); c.fillRect(wx + 2.4 * s, wy, 1 * s, 3.6 * s);
+        c.fillStyle = "#24433D"; c.fillRect(wx, wy, 2.4 * s, 3.6 * s);
+      }
+    }
+    // hintere Reihe am Hang
+    for (let x = x0 + 6 * s; x < x1 - 10 * s;){
+      const hw = (11 + r() * 10) * s, hh = (14 + r() * 14) * s;
+      house(x, ht - 13 * s, hw, hh, palette[(r() * palette.length) | 0]);
+      x += hw + (r() < .3 ? 5 * s : 0.5);
+    }
+    // Zypressen
+    for (let k = 0; k < 7; k++){
+      const tx = x0 + r() * (x1 - x0), th = (16 + r() * 16) * s;
+      c.fillStyle = "#27503F"; c.beginPath(); c.ellipse(tx, ht - 12 * s - th / 2, 2.6 * s, th / 2, 0, 0, Math.PI * 2); c.fill();
+    }
+    // Campanile
+    const cx = w * .44, ch = 58 * s, cw = 9 * s;
+    c.fillStyle = "#E9D6B2"; c.fillRect(cx, ht - ch, cw, ch);
+    c.fillStyle = "#24433D"; c.fillRect(cx + 2.5 * s, ht - ch + 6 * s, 4 * s, 7 * s);
+    c.fillStyle = "#8E5A44"; c.beginPath(); c.moveTo(cx - 1.5 * s, ht - ch); c.lineTo(cx + cw / 2, ht - ch - 14 * s); c.lineTo(cx + cw + 1.5 * s, ht - ch); c.closePath(); c.fill();
+    // vordere Reihe direkt am Wasser
+    for (let x = x0; x < x1;){
+      const hw = (13 + r() * 12) * s, hh = (18 + r() * 18) * s;
+      house(x, ht - 2 * s, hw, hh, palette[(r() * palette.length) | 0]);
+      x += hw + (r() < .2 ? 4 * s : 0);
+    }
+    // Uferkante
+    c.fillStyle = "#33524C"; c.fillRect(0, ht - 2 * s, w, 2 * s);
+    c.fillStyle = "#C9B89A"; c.fillRect(x0, ht - 2 * s, x1 - x0, 1 * s);
+  }
+
+  function setup(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = hero.clientWidth;
+    H = Math.max(560, window.innerHeight);
+    hero.style.height = H + "px";
+    HT = Math.round(H * .52);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawScene(ctx, W, HT);
+
+    sw = Math.ceil(W / S); sh = Math.ceil((H - HT) / S);
+    b1 = new Float32Array(sw * sh); b2 = new Float32Array(sw * sh);
+    shimmer = new Float32Array(sh);
+    small = document.createElement("canvas"); small.width = sw; small.height = sh;
+    sctx = small.getContext("2d");
+    // Textur: gespiegelte Szene, nach unten dunkler werdend
+    sctx.setTransform(1 / S, 0, 0, -1 / S, 0, HT / S);
+    sctx.drawImage(cv, 0, 0, cv.width, Math.round(HT * dpr), 0, 0, W, HT);
+    sctx.setTransform(1, 0, 0, 1, 0, 0);
+    const g = sctx.createLinearGradient(0, 0, 0, sh);
+    g.addColorStop(0, "rgba(20,74,80,.22)"); g.addColorStop(.35, "rgba(16,66,72,.55)"); g.addColorStop(1, "rgba(9,44,49,.93)");
+    sctx.fillStyle = g; sctx.fillRect(0, 0, sw, sh);
+    tex = sctx.getImageData(0, 0, sw, sh);
+    outImg = sctx.createImageData(sw, sh);
+    lastW = W;
+    renderWater(0);
+  }
+
+  function drop(cx, cy, r, amp){
+    const x0 = Math.max(1, cx - r), x1 = Math.min(sw - 2, cx + r), y0 = Math.max(1, cy - r), y1 = Math.min(sh - 2, cy + r);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+      const d = Math.hypot(x - cx, y - cy);
+      if (d <= r) b1[y * sw + x] += amp * (Math.cos(d / r * Math.PI) * .5 + .5);
+    }
+  }
+
+  function stepWater(){
+    const w = sw, h = sh;
+    for (let y = 1; y < h - 1; y++){
+      let i = y * w + 1;
+      for (let x = 1; x < w - 1; x++, i++){
+        let v = (b1[i - 1] + b1[i + 1] + b1[i - w] + b1[i + w]) * .5 - b2[i];
+        b2[i] = v - v * .028;
+      }
+    }
+    const t = b1; b1 = b2; b2 = t;
+  }
+
+  function renderWater(t){
+    const w = sw, h = sh, td = tex.data, od = outImg.data;
+    for (let y = 0; y < h; y++){
+      const k = y / h;
+      shimmer[y] = reduce ? 0 : (Math.sin(y * .85 - t * 2.1) * (.15 + k * .9) + Math.sin(y * .21 + t * .7) * (.15 + k * .5));
+    }
+    for (let y = 0; y < h; y++){
+      const sh0 = shimmer[y];
+      for (let x = 0; x < w; x++){
+        const i = y * w + x;
+        const dx = (x > 0 ? b1[i - 1] : 0) - (x < w - 1 ? b1[i + 1] : 0);
+        const dy = (y > 0 ? b1[i - w] : 0) - (y < h - 1 ? b1[i + w] : 0);
+        let sx = (x + dx * .09 + sh0) | 0, sy = (y + dy * .09) | 0;
+        if (sx < 0) sx = 0; else if (sx >= w) sx = w - 1;
+        if (sy < 0) sy = 0; else if (sy >= h) sy = h - 1;
+        const j = (sy * w + sx) * 4, o = i * 4, s = (dx - dy) * .22;
+        od[o] = td[j] + s; od[o + 1] = td[j + 1] + s; od[o + 2] = td[j + 2] + s; od[o + 3] = 255;
+      }
+    }
+    sctx.putImageData(outImg, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(small, 0, HT, W, H - HT);
+  }
+
+  function loop(ts){
+    if (!running) return;
+    stepWater(); renderWater(ts / 1000);
+    requestAnimationFrame(loop);
+  }
+  function start(){ if (!running){ running = true; requestAnimationFrame(loop); } }
+  function stop(){ running = false; }
+
+  // Berührung
+  const hint = document.getElementById("hint");
+  let touched = false;
+  function touchAt(clientX, clientY, amp){
+    const rc = cv.getBoundingClientRect();
+    const x = clientX - rc.left, y = clientY - rc.top;
+    if (y < HT) return;
+    drop(Math.round(x / S), Math.round((y - HT) / S), 4, amp);
+    if (!touched){ touched = true; setTimeout(() => hint.classList.add("gone"), 1800); }
+  }
+  let lastMove = 0;
+  cv.addEventListener("touchstart", e => { for (const t of e.changedTouches) touchAt(t.clientX, t.clientY, 260); }, {passive:true});
+  cv.addEventListener("touchmove", e => { const n = performance.now(); if (n - lastMove < 28) return; lastMove = n;
+    for (const t of e.changedTouches) touchAt(t.clientX, t.clientY, 90); }, {passive:true});
+  cv.addEventListener("mousedown", e => touchAt(e.clientX, e.clientY, 260));
+  cv.addEventListener("mousemove", e => { const n = performance.now(); if (n - lastMove < 28) return; lastMove = n; touchAt(e.clientX, e.clientY, e.buttons ? 110 : 40); });
+
+  setup();
+  new IntersectionObserver(es => es.forEach(en => en.isIntersecting ? start() : stop())).observe(hero);
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (hero.clientWidth !== lastW) setup(); }, 200); });
+
+  // ein einziger Tropfen zum Auftakt, danach ab und zu ein springender Fisch
+  setTimeout(() => drop(Math.round(sw * .62), Math.round(sh * .32), 5, 320), 900);
+  if (!reduce) setInterval(() => { if (running) drop(2 + ((Math.random() * (sw - 4)) | 0), 4 + ((Math.random() * (sh * .7)) | 0), 2, 120); }, 6500);
+
+  /* =========================================================
+     KARTE – Comer See + Gashebel
+     ========================================================= */
+  const NS = "http://www.w3.org/2000/svg";
+  // Norden des Comer Sees: Domaso, Colico, Halbinsel Olgiasca mit der Bucht von Piona, Dervio, Rezzonico
+  const LAKE = "M 112 18 C 135 14, 152 34, 162 62 C 174 92, 198 102, 212 118 C 205 145, 190 180, 180 210 " +
+    "C 176 220, 186 224, 192 214 C 200 198, 210 182, 220 168 C 226 158, 236 156, 238 168 C 242 190, 232 230, 226 260 " +
+    "C 220 290, 214 320, 213 350 C 212 380, 218 420, 222 460 C 225 490, 228 560, 228 640 L 118 640 " +
+    "C 116 490, 112 465, 109 445 C 104 420, 99 400, 97 382 C 93 355, 92 335, 90 318 C 86 290, 84 265, 85 245 " +
+    "C 86 215, 88 195, 91 178 C 93 160, 95 148, 97 135 C 99 110, 100 80, 102 60 C 104 40, 106 25, 112 18 Z";
+  const LAND = "#17362F", LINE = "#3C6359";
+  const LAYERS = [[60, LINE],[59.2, LAND],[44, LINE],[43.2, LAND],[29, LINE],[28.2, LAND],[15, LINE],[14.2, LAND],[3, "#7FB8B5"],[0, "#2F7F86"]];
+  const lakeG = document.getElementById("lakeLayers");
+  for (const [extra, col] of LAYERS){
+    const p = document.createElementNS(NS, "path");
+    p.setAttribute("d", LAKE); p.setAttribute("fill", col);
+    if (extra > 0){ p.setAttribute("stroke", col); p.setAttribute("stroke-width", extra * 2); p.setAttribute("stroke-linejoin", "round"); }
+    lakeG.appendChild(p);
+  }
+
+  const STOPS = [
+    {name:"Domaso", x:96, y:137, lx:-7, ly:4, anchor:"end", t:0,
+     text:"Hier legen wir ab, ein paar Schritte vom Campingplatz entfernt. Kurze Einweisung, Schwimmwesten an Bord, dann gehört das Steuer dir."},
+    {name:"Abbazia di Piona", label:"Piona", x:200, y:190, lx:8, ly:-8, anchor:"start", rx:214, ry:200,
+     text:"Rüber ans andere Ufer, in die geschützte Bucht von Piona. Oben auf der Landzunge steht eine alte Abtei, unten liegt das Wasser oft spiegelglatt."},
+    {name:"Corenno Plinio", label:"Corenno", x:214, y:348, lx:8, ly:4, anchor:"start", rx:203, ry:350,
+     text:"Ein winziges Dorf mit Burg, direkt über dem Wasser. Langsam vorbeituckern und die Kamera rausholen."},
+    {name:"Rezzonico", x:109, y:446, lx:-7, ly:4, anchor:"end", rx:120, ry:440,
+     text:"Quer über den See zum Burgturm von Rezzonico. Motor aus, treiben lassen, Sonne tanken."},
+    {name:"Gravedona", x:90, y:182, lx:-7, ly:4, anchor:"end", rx:100, ry:184,
+     text:"Am Ufer steht die alte Kirche Santa Maria del Tiglio. Kurz anlegen für das erste Gelato."},
+    {name:"Domaso", title:"Zurück in Domaso", t:1, noMarker:true,
+     text:"Boot zurück, Füße hoch. Dann Aperol oder ein Glas Vino mit Blick aufs Wasser. Dolce Vita, wie du sie liebst."}
+  ];
+  const route = document.getElementById("route");
+  const L = route.getTotalLength();
+  const samples = [];
+  for (let i = 0; i <= 600; i++){ const p = route.getPointAtLength(L * i / 600); samples.push([p.x, p.y]); }
+  const stopsG = document.getElementById("stops");
+  let prevT = 0;
+  STOPS.forEach(s => {
+    if (s.t === undefined){
+      let best = 0, bd = 1e9;
+      samples.forEach(([x, y], i) => { if (i / 600 <= prevT) return; const d = (x - s.rx) ** 2 + (y - s.ry) ** 2; if (d < bd){ bd = d; best = i; } });
+      s.t = best / 600;
+    }
+    prevT = s.t;
+    if (s.noMarker) return;
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", s.x); c.setAttribute("cy", s.y); c.setAttribute("r", s.island ? 0 : 3.2); c.setAttribute("class", "dot");
+    const tx = document.createElementNS(NS, "text");
+    tx.setAttribute("x", s.x + s.lx); tx.setAttribute("y", s.y + s.ly); tx.setAttribute("text-anchor", s.anchor); tx.setAttribute("class", "place");
+    tx.textContent = s.label || s.name;
+    stopsG.append(c, tx); s.dot = c;
+  });
+
+  const wakeReveal = document.getElementById("wakeReveal");
+  wakeReveal.setAttribute("d", route.getAttribute("d"));
+  wakeReveal.style.strokeDasharray = L; wakeReveal.style.strokeDashoffset = L;
+  const boat = document.getElementById("boat"), bowWave = document.getElementById("bowWave");
+  let prog = 0, lever = 0, reached = 0, arrived = false, lastAngle = -55, animating = false, lastTs = 0;
+
+  function placeBoat(){
+    const l = prog * L;
+    const p = route.getPointAtLength(l);
+    if (l < L - .6){ const q = route.getPointAtLength(Math.min(L, l + .6)); lastAngle = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI; }
+    boat.setAttribute("transform", `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${lastAngle.toFixed(1)})`);
+    wakeReveal.style.strokeDashoffset = (L - l).toFixed(2);
+    bowWave.setAttribute("opacity", arrived ? 0 : (lever * .9).toFixed(2));
+  }
+
+  // Postkarte
+  const card = document.getElementById("card");
+  function showStop(i, animate){
+    const s = STOPS[i];
+    document.getElementById("cardNo").textContent = `Halt ${i + 1} von ${STOPS.length}`;
+    document.getElementById("cardTitle").textContent = s.title || s.name;
+    document.getElementById("cardText").textContent = s.text;
+    STOPS.forEach((st, k) => st.dot && st.dot.classList.toggle("on", k <= i));
+    if (animate && !reduce){ card.classList.remove("flip"); void card.offsetWidth; card.classList.add("flip"); }
+  }
+  showStop(0, false);
+
+  // Gashebel
+  const thr = document.getElementById("throttle"), knob = document.getElementById("knob");
+  const gears = [...document.querySelectorAll("#gears li")];
+  const GEAR_TEXT = ["Leerlauf", "Langsame Fahrt", "Halbe Kraft", "Volle Kraft"];
+  function gearOf(v){ return v < .06 ? 0 : v < .4 ? 1 : v < .75 ? 2 : 3; }
+  function setLever(v){
+    lever = Math.max(0, Math.min(1, v));
+    const track = thr.clientHeight - knob.offsetHeight;
+    knob.style.transform = `translateY(${-(lever * track).toFixed(1)}px)`;
+    const g = gearOf(lever);
+    gears.forEach(li => li.classList.toggle("on", +li.dataset.g === g));
+    thr.setAttribute("aria-valuenow", Math.round(lever * 100));
+    thr.setAttribute("aria-valuetext", GEAR_TEXT[g]);
+    if (lever > 0 && !arrived) run();
+  }
+  function fromPointer(e){
+    const r = thr.getBoundingClientRect(), kh = knob.offsetHeight;
+    setLever(1 - (e.clientY - r.top - kh / 2) / (r.height - kh));
+  }
+  thr.addEventListener("pointerdown", e => { if (arrived) return; thr.setPointerCapture(e.pointerId); fromPointer(e); });
+  thr.addEventListener("pointermove", e => { if (thr.hasPointerCapture(e.pointerId)) fromPointer(e); });
+  thr.addEventListener("keydown", e => {
+    if (arrived) return;
+    const map = {ArrowUp:.1, ArrowRight:.1, ArrowDown:-.1, ArrowLeft:-.1, PageUp:.33, PageDown:-.33};
+    if (e.key in map){ e.preventDefault(); setLever(lever + map[e.key]); }
+    if (e.key === "Home"){ e.preventDefault(); setLever(0); }
+    if (e.key === "End"){ e.preventDefault(); setLever(1); }
+  });
+
+  function run(){ if (!animating){ animating = true; lastTs = performance.now(); requestAnimationFrame(tick); } }
+  function tick(ts){
+    const dt = Math.min(.05, (ts - lastTs) / 1000); lastTs = ts;
+    if (lever <= 0 || arrived){ animating = false; placeBoat(); return; }
+    prog = Math.min(1, prog + Math.pow(lever, 1.25) * .06 * dt);
+    while (reached < STOPS.length - 1 && prog >= STOPS[reached + 1].t){ reached++; showStop(reached, true); }
+    if (prog >= 1) arrive();
+    placeBoat();
+    requestAnimationFrame(tick);
+  }
+  const arriveBox = document.getElementById("arrive");
+  function arrive(){
+    arrived = true;
+    // Hebel gleitet zurück in den Leerlauf
+    const from = lever, t0 = performance.now();
+    (function back(n){ const k = Math.min(1, (n - t0) / 700); lever = from * (1 - k);
+      const track = thr.clientHeight - knob.offsetHeight; knob.style.transform = `translateY(${-(lever * track).toFixed(1)}px)`;
+      if (k < 1) requestAnimationFrame(back); else { setLeverQuiet(0); } })(t0);
+    arriveBox.hidden = false;
+    placeBoat();
+  }
+  function setLeverQuiet(v){ lever = v; gears.forEach(li => li.classList.toggle("on", +li.dataset.g === 0));
+    thr.setAttribute("aria-valuenow", 0); thr.setAttribute("aria-valuetext", GEAR_TEXT[0]); knob.style.transform = "translateY(0)"; }
+  document.getElementById("again").addEventListener("click", () => {
+    arrived = false; prog = 0; reached = 0; setLeverQuiet(0); showStop(0, true); arriveBox.hidden = true; placeBoat(); thr.focus();
+  });
+  document.getElementById("toGift").addEventListener("click", () => {
+    document.getElementById("geschenk").scrollIntoView({behavior: reduce ? "auto" : "smooth"});
+  });
+  placeBoat();
+  window.addEventListener("resize", () => setLever(lever));
+
+  /* =========================================================
+     TICKET – Abschnitt abreißen
+     ========================================================= */
+  const stub = document.getElementById("stub"), ticket = document.getElementById("ticket"), redeemed = document.getElementById("redeemed");
+  let sy0 = null, dragged = 0, torn = false;
+  function tear(){
+    if (torn) return; torn = true;
+    stub.classList.remove("dragging"); stub.classList.add("torn");
+    ticket.classList.add("is-torn"); stub.setAttribute("aria-hidden", "true"); stub.tabIndex = -1;
+    setTimeout(() => { stub.style.display = "none"; redeemed.hidden = false; }, reduce ? 0 : 900);
+  }
+  stub.addEventListener("pointerdown", e => { if (torn) return; sy0 = e.clientY; dragged = 0; stub.setPointerCapture(e.pointerId); stub.classList.add("dragging"); });
+  stub.addEventListener("pointermove", e => {
+    if (sy0 === null || torn) return;
+    dragged = Math.max(0, e.clientY - sy0);
+    const d = Math.min(dragged, 90);
+    stub.style.transform = `translateY(${d * .35}px) rotate(${d * .09}deg)`;
+    if (dragged > 70) { sy0 = null; tear(); }
+  });
+  function endDrag(){ if (sy0 === null) return; sy0 = null; stub.classList.remove("dragging");
+    if (dragged < 6) tear(); else stub.style.transform = ""; }
+  stub.addEventListener("pointerup", endDrag);
+  stub.addEventListener("pointercancel", () => { sy0 = null; stub.classList.remove("dragging"); stub.style.transform = ""; });
+  // Dolce Vita: Aperol oder Vino
+  const glasses = [...document.querySelectorAll(".glass")], msg = document.getElementById("saluteMsg");
+  glasses.forEach(g => g.addEventListener("click", () => {
+    glasses.forEach(o => o.setAttribute("aria-pressed", String(o === g)));
+    const n = readName();
+    msg.textContent = `${g.dataset.pick[0].toUpperCase()}${g.dataset.pick.slice(1)} also. Salute${n ? ", " + n : ""}!`;
+  }));
+  stub.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); tear(); } });
+})();
+</script>
+</body>
+</html>
